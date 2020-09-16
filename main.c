@@ -1,3 +1,11 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-:q
-close
+int main(){
+	int n;
+	scanf("%d", &n);
+	printf("%d", n);
+	return 0;
+}
+
