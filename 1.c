@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+
 typedef struct list{
     char* str;
     struct list* next;
@@ -16,7 +17,7 @@ list* init(list* head){
 
 char* extendbuff(char* buff, int* lenbuff){
     char* newBuff = malloc(sizeof(char) * (*lenbuff) * 2);
-    strncpy(newBuff, buff, *lenbuff); 
+    strncpy(newBuff, buff, *lenbuff);
     *lenbuff *=2;
     free(buff);
     return newBuff;
@@ -24,8 +25,8 @@ char* extendbuff(char* buff, int* lenbuff){
 
 void printlist(list* head){
     if (head != NULL){
-	printlist(head->next); 
-        if (head->next != NULL) 
+        printlist(head->next);
+        if (head->next != NULL)
             printf("%s\n", head->str);
     }
 }
@@ -73,30 +74,35 @@ int main(){
                 buff[i] = c;
                 i++;
             }
-	    else if (c != ' ' && c == '\"'){
-		quoteflag = !quoteflag;
-                headlist = addtolist(headlist, buff, i);
-		i = 0;
-	    }
+            else if (c != ' ' && c == '\"'){
+                quoteflag = !quoteflag;
+                if (i != 0){
+                    headlist = addtolist(headlist, buff, i);
+                    i = 0;
+                }
+            }
             else if (i != 0){
                 headlist = addtolist(headlist, buff, i);
                 i = 0;
             }
         }
-        else{
-            headlist = addtolist(headlist, buff, i);
+        else {
+            if (i != 0)
+                headlist = addtolist(headlist, buff, i);
             i = 0;
-   	    if (quoteflag){
-        	printf("%s\n", "incorrect input");
+   	        if (quoteflag){
+                printf("%s\n", "incorrect input");
        	    }
-    	    else {
-        	printRecurs(headlist);
-            	freemem(headlist);
-		headlist = init(headlist);
-		printf("%s", ">> ");
-    	    }
+            else{
+                printRecurs(headlist);
+            }
+            freemem(headlist);
+	       headlist = init(headlist);
+	       quoteflag = false;
+	       printf("%s", ">> ");
         }
     }
+    printf("\n");
     free(buff);
     return 0;
 }
