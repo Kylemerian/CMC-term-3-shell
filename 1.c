@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <stdbool.h>
 typedef struct list{
     char* str;
     struct list* next;
@@ -52,19 +52,25 @@ int main(){
     int c;
     int lenbuff = 8;
     int i = 0;
+    bool quoteflag = false;
     list* headlist = malloc(sizeof(*headlist));
     headlist->next = NULL;
     headlist->str = NULL;
     char* buff = malloc(sizeof(char) * lenbuff);
     while((c = getchar()) != EOF){
         if (c != '\n'){
-            if (c != ' '){
+            if (c != ' ' && c != '\"'){
                 if(i >= lenbuff - 1){
                     buff = extendbuff(buff, &lenbuff);
                 }
                 buff[i] = c;
                 i++;
             }
+	    else if (c != ' ' && c == '\"'){
+		quoteflag = !quoteflag;
+                headlist = addtolist(headlist, buff, i);
+		i = 0;
+	    }
             else if (i != 0){
                 headlist = addtolist(headlist, buff, i);
                 i = 0;
@@ -75,9 +81,14 @@ int main(){
             i = 0;
         }
     }
-    free(buff);
-    printRecurs(headlist);
-    freemem(headlist);
+    if (quoteflag){
+        freemem(headlist);
+        free(buff);
+        printf("%s\n", "incorrect input");
+    }
+    else {
+        printRecurs(headlist);
+    }
     return 0;
 }
 
