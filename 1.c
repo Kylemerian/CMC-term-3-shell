@@ -7,6 +7,13 @@ typedef struct list{
     struct list* next;
 }list;
 
+list* init(list* head){
+    head = malloc(sizeof(*head));
+    head->str = NULL;
+    head->next = NULL;
+    return head;
+}
+
 char* extendbuff(char* buff, int* lenbuff){
     char* newBuff = malloc(sizeof(char) * (*lenbuff) * 2);
     strncpy(newBuff, buff, *lenbuff); 
@@ -53,10 +60,10 @@ int main(){
     int lenbuff = 8;
     int i = 0;
     bool quoteflag = false;
-    list* headlist = malloc(sizeof(*headlist));
-    headlist->next = NULL;
-    headlist->str = NULL;
+    list* headlist = NULL;
+    headlist = init(headlist);
     char* buff = malloc(sizeof(char) * lenbuff);
+    printf("%s", ">> ");
     while((c = getchar()) != EOF){
         if (c != '\n'){
             if (c != ' ' && c != '\"'){
@@ -79,16 +86,18 @@ int main(){
         else{
             headlist = addtolist(headlist, buff, i);
             i = 0;
+   	    if (quoteflag){
+        	printf("%s\n", "incorrect input");
+       	    }
+    	    else {
+        	printRecurs(headlist);
+            	freemem(headlist);
+		headlist = init(headlist);
+		printf("%s", ">> ");
+    	    }
         }
     }
-    if (quoteflag){
-        freemem(headlist);
-        free(buff);
-        printf("%s\n", "incorrect input");
-    }
-    else {
-        printRecurs(headlist);
-    }
+    free(buff);
     return 0;
 }
 
