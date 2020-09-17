@@ -29,10 +29,12 @@ void printlist(list* head){
         if (head->next != NULL)
             printf("%s\n", head->str);
     }
+    return;
 }
 
 void printRecurs(list* headlist){
     printlist(headlist);
+    return;
 }
 
 void freemem(list* headlist){
