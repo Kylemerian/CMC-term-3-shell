@@ -67,7 +67,7 @@ int main(){
     printf("%s", ">> ");
     while((c = getchar()) != EOF){
         if (c != '\n'){
-            if (c != ' ' && c != '\"'){
+            if ((c != ' ' && c != '\"') || (c == ' ' && quoteflag)){
                 if(i >= lenbuff - 1){
                     buff = extendbuff(buff, &lenbuff);
                 }
