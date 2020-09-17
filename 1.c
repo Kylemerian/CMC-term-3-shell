@@ -7,20 +7,24 @@ typedef struct list{
     struct list* next;
 }list;
 
-char* extendbuff(char* buff, int lenbuff){
-    char* newBuff = malloc(sizeof(char) * lenbuff * 2);
-    lenbuff *=2;
-    strncpy(newBuff, buff, lenbuff+1); 
+char* extendbuff(char* buff, int* lenbuff){
+    char* newBuff = malloc(sizeof(char) * (*lenbuff) * 2);
+    strncpy(newBuff, buff, *lenbuff); 
+    *lenbuff *=2;
     free(buff);
     return newBuff;
 }
 
 void printlist(list* head){
-    if (head != NULL){ 
+    if (head != NULL){
+	printlist(head->next); 
         if (head->next != NULL) 
             printf("%s\n", head->str);
-        printlist(head->next);
     }
+}
+
+void printRecurs(list* headlist){
+    printlist(headlist);
 }
 
 void freemem(list* headlist){
@@ -55,8 +59,8 @@ int main(){
     while((c = getchar()) != EOF){
         if (c != '\n'){
             if (c != ' '){
-                if(i >= lenbuff){
-                    buff = extendbuff(buff, lenbuff);
+                if(i >= lenbuff - 1){
+                    buff = extendbuff(buff, &lenbuff);
                 }
                 buff[i] = c;
                 i++;
@@ -72,7 +76,8 @@ int main(){
         }
     }
     free(buff);
+    printRecurs(headlist);
     freemem(headlist);
-    //printlist(headlist);
     return 0;
 }
+
