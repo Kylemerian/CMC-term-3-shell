@@ -21,7 +21,7 @@ list * init(list * head) {
 
 char * extendbuff(char * buff, int * lenbuff) {
     char * newBuff = malloc(sizeof(char) * ( * lenbuff) * 2);
-    strncpy(newBuff, buff, * lenbuff);
+    strncpy(newBuff, buff, (* lenbuff) - 1);
     * lenbuff *= 2;
     free(buff);
     return newBuff;
@@ -104,7 +104,8 @@ int main() {
             printf("%s", ">> ");
         }
     }
-    printf("\n");
+    freemem(headlist);
     free(buff);
+    printf("\n");
     return 0;
 }
