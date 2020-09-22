@@ -10,7 +10,7 @@ typedef struct list {
 }
 list;
 
-list * init(list * head) 
+list * init(list * head)
 {
     head = malloc(sizeof( * head));
     head -> str = NULL;
@@ -18,10 +18,11 @@ list * init(list * head)
     return head;
 }
 
-char * extendbuff(char * buff, int lenbuff) 
+char * extendbuff(char * buff, int * lenbuff)
 {
-    char * newBuff = malloc(lenbuff * 2);
-    strncpy(newBuff, buff, lenbuff - 1);
+    char * newBuff = malloc((*lenbuff) * 2);
+    strncpy(newBuff, buff, (*lenbuff) - 1);
+    *lenbuff *= 2;
     free(buff);
     return newBuff;
 }
@@ -34,12 +35,12 @@ void printlist(list * head) {
     }
 }
 
-void printRecurs(list * headlist) 
+void printRecurs(list * headlist)
 {
     printlist(headlist);
 }
 
-void freemem(list * headlist) 
+void freemem(list * headlist)
 {
     if (headlist != NULL) {
         if (headlist -> str != NULL)
@@ -51,7 +52,7 @@ void freemem(list * headlist)
     }
 }
 
-list * addtolist(list * head, char * str, int lenbuff) 
+list * addtolist(list * head, char * str, int lenbuff)
 {
     list * tmp = malloc(sizeof( * tmp));
     tmp -> str = malloc(lenbuff + 1);
@@ -61,7 +62,7 @@ list * addtolist(list * head, char * str, int lenbuff)
     return tmp;
 }
 
-int main() 
+int main()
 {
     int c;
     int lenbuff = 8;
@@ -74,33 +75,29 @@ int main()
     while ((c = getchar()) != EOF) {
         if (c != '\n') {
             if ((c != ' ' && c != '\"') || (c == ' ' && quoteflag)) {
-                if (i >= lenbuff - 1) {
-                    buff = extendbuff(buff, lenbuff);
-                    lenbuff *= 2;
-                }
+                if (i >= lenbuff - 1)
+                    buff = extendbuff(buff, &lenbuff);
                 buff[i] = c;
                 i++;
-            } 
+            }
             else if (c == '\"')
                 quoteflag = !quoteflag;
             else if (i != 0) {
                 headlist = addtolist(headlist, buff, i);
                 i = 0;
             }
-        } 
+        }
         else {
             if (i != 0)
                 headlist = addtolist(headlist, buff, i);
-            i = 0;
-            if (quoteflag) {
+            if (quoteflag)
                 printf("%s\n", "incorrect input");
-            } 
-            else {
+            else
                 printRecurs(headlist);
-            }
             freemem(headlist);
             headlist = init(headlist);
             quoteflag = 0;
+            i = 0;
             printf("%s", ">> ");
         }
     }
