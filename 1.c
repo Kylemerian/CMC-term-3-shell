@@ -62,6 +62,17 @@ list * addtolist(list * head, char * str, int lenbuff)
     return tmp;
 }
 
+list * reset(list * headlist, int * quoteflag, int * iterator)
+{
+    freemem(headlist);
+    list * tmp = NULL;
+    tmp = init(tmp);
+    *quoteflag = 0;
+    *iterator = 0;
+    printf("%s", ">> ");
+    return tmp;
+}
+
 int main()
 {
     int c;
@@ -94,11 +105,7 @@ int main()
                 printf("%s\n", "incorrect input");
             else
                 printRecurs(headlist);
-            freemem(headlist);
-            headlist = init(headlist);
-            quoteflag = 0;
-            i = 0;
-            printf("%s", ">> ");
+            headlist = reset(headlist, &quoteflag, &i);
         }
     }
     freemem(headlist);
