@@ -1,78 +1,111 @@
 #include <stdio.h>
+
 #include <stdlib.h>
+
 #include <string.h>
 
-typedef struct list{
-    char* str;
-    struct list* next;
-}list;
+typedef struct list {
+    char * str;
+    struct list * next;
+} list;
 
-char* extendbuff(char* buff, int lenbuff){
-    char* newBuff = malloc(sizeof(char) * lenbuff * 2);
-    lenbuff *=2;
-    strncpy(newBuff, buff, lenbuff+1); 
+list * init(list * head)
+{
+    head = malloc(sizeof( * head));
+    head -> str = NULL;
+    head -> next = NULL;
+    return head;
+}
+
+char * extendbuff(char * buff, int lenbuff)
+{
+    char * newBuff = malloc(lenbuff * 2);
+    strncpy(newBuff, buff, lenbuff - 1);
     free(buff);
     return newBuff;
 }
 
-void printlist(list* head){
-    if (head != NULL){ 
-        if (head->next != NULL) 
-            printf("%s\n", head->str);
-        printlist(head->next);
+void printlist(list * head)
+{
+    if (head != NULL) {
+        printlist(head -> next);
+        if (head -> next != NULL)
+            printf("%s\n", head -> str);
     }
 }
 
-void freemem(list* headlist){
-    if (headlist != NULL){
-        if (headlist->str != NULL)
-            free(headlist->str);
-        list* tmp = headlist;
-        headlist = headlist->next;
+void printRecurs(list * headlist)
+{
+    printlist(headlist);
+}
+
+void freemem(list * headlist)
+{
+    if (headlist != NULL) {
+        if (headlist -> str != NULL)
+            free(headlist -> str);
+        list * tmp = headlist;
+        headlist = headlist -> next;
         free(tmp);
         freemem(headlist);
     }
-    return;
 }
 
-list* addtolist(list* head, char* str, int lenbuff){
-    list* tmp = malloc(sizeof(*tmp));
-    tmp->str = malloc(sizeof(char) * (lenbuff+1));
-    strncpy(tmp->str, str, lenbuff);
-    tmp->str[lenbuff] = 0;
-    tmp->next = head;
+list * addtolist(list * head, char * str, int lenbuff)
+{
+    list * tmp = malloc(sizeof( * tmp));
+    tmp -> str = malloc(lenbuff + 1);
+    strncpy(tmp -> str, str, lenbuff);
+    tmp -> str[lenbuff] = 0;
+    tmp -> next = head;
     return tmp;
 }
 
-int main(){
+int main()
+{
     int c;
     int lenbuff = 8;
     int i = 0;
-    list* headlist = malloc(sizeof(*headlist));
-    headlist->next = NULL;
-    headlist->str = NULL;
-    char* buff = malloc(sizeof(char) * lenbuff);
-    while((c = getchar()) != EOF){
-        if (c != '\n'){
-            if (c != ' '){
-                if(i >= lenbuff){
+    int quoteflag = 0;
+    char * buff = malloc(lenbuff);
+    list * headlist = NULL;
+    headlist = init(headlist);
+    printf("%s", ">> ");
+    while ((c = getchar()) != EOF) {
+        if (c != '\n') {
+            if ((c != ' ' && c != '\"') || (c == ' ' && quoteflag)) {
+                if (i >= lenbuff - 1) {
                     buff = extendbuff(buff, lenbuff);
+					lenbuff *= 2;
                 }
-                buff[i] = c;
+				buff[i] = c;
                 i++;
             }
-            else if (i != 0){
+			else if (c == '\"')
+				quoteflag = !quoteflag;
+			else if (i != 0) {
                 headlist = addtolist(headlist, buff, i);
                 i = 0;
             }
         }
-        else{
-            headlist = addtolist(headlist, buff, i);
+		else {
+            if (i != 0)
+                headlist = addtolist(headlist, buff, i);
             i = 0;
+            if (quoteflag) {
+                printf("%s\n", "incorrect input");
+            }
+			else {
+                printRecurs(headlist);
+            }
+            freemem(headlist);
+            headlist = init(headlist);
+            quoteflag = 0;
+            printf("%s", ">> ");
         }
     }
-    free(buff);
     freemem(headlist);
-    //printlist(headlist);
+    free(buff);
+    printf("\n");
     return 0;
 }
