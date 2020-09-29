@@ -52,6 +52,7 @@ void freemem(list * headlist)
     }
 }
 
+
 list * addtolist(list * head, char * str, int lenbuff)
 {
     list * tmp = malloc(sizeof( * tmp));
