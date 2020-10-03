@@ -4,6 +4,8 @@
 
 #include <string.h>
 
+#include <unistd.h>
+
 typedef struct list {
     char * str;
     struct list * next;
@@ -63,6 +65,36 @@ list * addtolist(list * head, char * str, int lenbuff)
     return tmp;
 }
 
+int listsize(list * headlist){
+    int iterator = 0;
+    list * tmp = headlist;
+    while(tmp != NULL){
+        iterator++;
+        tmp = tmp->next;
+    }
+    return iterator;
+}
+
+char ** makearray(list * headlist){
+    list * tmp = headlist;
+    int size = listsize(headlist);
+    char * arr[size];
+    for(int i = 0; tmp != NULL; i++, tmp = tmp->next){
+        arr[i] = malloc(strlen(tmp->str));
+        strncpy(arr[i], tmp->str, strlen(tmp->str));
+    }
+    return arr;
+}
+
+void execute(list * headlist){
+    pid_t pid;
+    if((pid = fork()) == 0){
+        execl("/bin/ls", "ls", "-1", (char*)0);
+    }
+    char * arr[listsize(headlist)];
+    arr = makearray(headlist);
+}
+
 void endline(list ** headlist, char * buff, int * quoteflag, int * iterator)
 {
     if (*iterator != 0)
@@ -71,7 +103,7 @@ void endline(list ** headlist, char * buff, int * quoteflag, int * iterator)
     if (*quoteflag)
         printf("%s\n", "incorrect input");
     else
-        printRecurs(*headlist);
+        execute(*headlist);
     freemem(*headlist);
     *headlist = init(*headlist);
     *quoteflag = 0;
