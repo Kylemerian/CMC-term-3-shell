@@ -29,7 +29,8 @@ char * extendbuff(char * buff, int * lenbuff)
     return newBuff;
 }
 
-void printlist(list * head) {
+void printlist(list * head)
+{
     if (head != NULL) {
         printlist(head -> next);
         if (head -> next != NULL)
@@ -65,34 +66,38 @@ list * addtolist(list * head, char * str, int lenbuff)
     return tmp;
 }
 
-int listsize(list * headlist){
+int listsize(list * headlist)
+{
     int iterator = 0;
     list * tmp = headlist;
     while(tmp != NULL){
         iterator++;
         tmp = tmp->next;
     }
-    return iterator;
+    return (iterator - 1);
 }
 
-char ** makearray(list * headlist){
-    list * tmp = headlist;
+void execute(list * headlist)
+{
     int size = listsize(headlist);
     char * arr[size];
-    for(int i = 0; tmp != NULL; i++, tmp = tmp->next){
+    list * tmp = headlist;
+    for(int i = size - 1; i >= 0; i--, tmp = tmp->next){
         arr[i] = malloc(strlen(tmp->str));
         strncpy(arr[i], tmp->str, strlen(tmp->str));
     }
-    return arr;
-}
-
-void execute(list * headlist){
     pid_t pid;
     if((pid = fork()) == 0){
-        execl("/bin/ls", "ls", "-1", (char*)0);
+        int lenstr = strlen("/bin/") + strlen(arr[0]);
+        char pathcomm[lenstr];
+        memset(pathcomm, '\0', lenstr);
+        strcat(pathcomm, "/bin/");
+        strcat(pathcomm, arr[0]);
+        printf("%s", pathcomm);
+        execvp(pathcomm, &arr[1]);
     }
-    char * arr[listsize(headlist)];
-    arr = makearray(headlist);
+    for(int i = 0; i < size; i++)
+        free(arr[i]);
 }
 
 void endline(list ** headlist, char * buff, int * quoteflag, int * iterator)
