@@ -80,12 +80,13 @@ int listsize(list * headlist)
 void execute(list * headlist)
 {
     int size = listsize(headlist);
-    char * arr[size];
+    char * arr[size + 1];
     list * tmp = headlist;
     for(int i = size - 1; i >= 0; i--, tmp = tmp->next){
         arr[i] = malloc(strlen(tmp->str));
         strncpy(arr[i], tmp->str, strlen(tmp->str));
     }
+    arr[size] = (char*)0;
     pid_t pid;
     if((pid = fork()) == 0){
         int lenstr = strlen("/bin/") + strlen(arr[0]);
@@ -93,11 +94,10 @@ void execute(list * headlist)
         memset(pathcomm, '\0', lenstr);
         strcat(pathcomm, "/bin/");
         strcat(pathcomm, arr[0]);
-        printf("%s", pathcomm);
-        execvp(pathcomm, &arr[1]);
-    }
-    for(int i = 0; i < size; i++)
-        free(arr[i]);
+        execvp(pathcomm, arr);
+        for(int i = 0; i < size + 1; i++)
+            free(arr[i]);
+    }    
 }
 
 void endline(list ** headlist, char * buff, int * quoteflag, int * iterator)
