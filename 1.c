@@ -8,6 +8,8 @@
 
 #include <sys/types.h>
 
+#include <sys/wait.h>
+
 typedef struct list {
     char * str;
     struct list * next;
@@ -83,13 +85,14 @@ void execute(list * headlist)
 {
     int size = listsize(headlist);
     char ** arr;
-    arr = malloc(size  * sizeof(*arr));
+    arr = malloc((size + 1)  * sizeof(*arr));
     list * tmp = headlist;
     for(int i = size - 1; i >= 0; i--, tmp = tmp->next){
-        arr[i] = malloc(strlen(tmp->str));
+        arr[i] = malloc(strlen(tmp->str) + 1);
         strncpy(arr[i], tmp->str, strlen(tmp->str));
+        arr[i][strlen(tmp->str)] = 0;
     }
-    
+    arr[size] = (char*)NULL;
     pid_t pid;
     if((pid = fork()) == 0){
         int lenstr = strlen("/bin/") + strlen(arr[0]);
@@ -98,8 +101,10 @@ void execute(list * headlist)
         strcat(pathcomm, "/bin/");
         strcat(pathcomm, arr[0]);
         execvp(pathcomm, arr);
-        exit(0);
+        exit(1);
     }   
+    int status;
+    while(wait(&status) != -1);
     for(int i = 0; i < size; i++)
           free(arr[i]); 
     free(arr);
