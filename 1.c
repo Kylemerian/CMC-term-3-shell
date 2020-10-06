@@ -76,6 +76,12 @@ int listsize(list * headlist)
     return (iterator - 1);
 }
 
+int spaceortab(char c)
+{
+    return ((c == ' ') || (c == '\t'));
+}
+
+
 void changedir(char ** arr, int size)
 {
     int status;
@@ -99,20 +105,20 @@ void execute(list * headlist)
         arr[i] = malloc(strlen(tmp->str) + 1);
         strncpy(arr[i], tmp->str, strlen(tmp->str));
         arr[i][strlen(tmp->str)] = 0;
-    }
+    }  
     arr[size] = (char*)NULL;
-    pid_t pid = fork();
-    if(pid == 0){
-        if(!strcmp(arr[0], "cd")){
-            changedir(arr, size);
-        }
-        else{
+    if(!strcmp(arr[0], "cd")){
+        changedir(arr, size);
+    }
+    else{
+        pid_t pid = fork();
+        if(pid == 0){
             execvp(arr[0], arr);
             perror(NULL);
             exit(1);
         }
+        wait(NULL);
     }
-    wait(NULL);
     for(j = 0; j < size; j++)
           free(arr[j]);
     free(arr);
@@ -153,7 +159,7 @@ int main()
     printf("%s", ">> ");
     while ((c = getchar()) != EOF) {
         if (c != '\n') {
-            if ((c != ' ' && c != '\"') || (c == ' ' && quoteflag)) {
+            if ((!spaceortab(c) && c != '\"') || (spaceortab(c) && quoteflag)) {
                 if (i >= lenbuff - 1)
                     buff = extendbuff(buff, &lenbuff);
                 buff[i] = c;
