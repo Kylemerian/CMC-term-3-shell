@@ -1,13 +1,8 @@
 #include <stdio.h>
-
 #include <stdlib.h>
-
 #include <string.h>
-
 #include <unistd.h>
-
 #include <sys/types.h>
-
 #include <sys/wait.h>
 
 typedef struct list {
@@ -81,6 +76,19 @@ int listsize(list * headlist)
     return (iterator - 1);
 }
 
+void changedir(char ** arr, int size)
+{
+    int status;
+    if(size == 2){
+        status = chdir(arr[1]);
+        if(status == -1)
+            perror(arr[1]);
+    }
+    else {
+        printf("%s\n", "Too many args");
+    }
+}
+
 void execute(list * headlist)
 {
     int size = listsize(headlist);
@@ -95,32 +103,42 @@ void execute(list * headlist)
     arr[size] = (char*)NULL;
     pid_t pid = fork();
     if(pid == 0){
-        execvp(arr[0], arr);
-        perror(NULL);
-        exit(1);
+        if(!strcmp(arr[0], "cd")){
+            changedir(arr, size);
+        }
+        else{
+            execvp(arr[0], arr);
+            perror(NULL);
+            exit(1);
+        }
     }
-    int status = wait(NULL);
-    while(status != -1){
-        status = wait(NULL);
-    }
+    wait(NULL);
     for(j = 0; j < size; j++)
           free(arr[j]);
     free(arr);
 }
 
-void endline(list ** headlist, char * buff, int * quoteflag, int * iterator)
+list * reinit(list ** headlist)
 {
-    if (*iterator != 0)
+    freemem(*headlist);
+    printf("%s", ">>");
+    return init(*headlist);
+}
+
+void processinglast(int * iterator, char * buff, list **headlist)
+{
+    if(*iterator != 0)
         *headlist = addtolist(*headlist, buff, *iterator);
     *iterator = 0;
+}
+
+void iscorrectquote(int * quoteflag, list ** headlist)
+{
     if (*quoteflag)
         printf("%s\n", "incorrect input");
     else
         execute(*headlist);
-    freemem(*headlist);
-    *headlist = init(*headlist);
     *quoteflag = 0;
-    printf("%s", ">>");
 }
 
 int main()
@@ -148,8 +166,11 @@ int main()
                 i = 0;
             }
         }
-        else
-            endline(&headlist, buff, &quoteflag, &i);
+        else{
+            processinglast(&i, buff, &headlist);
+            iscorrectquote(&quoteflag, &headlist);
+            headlist = reinit(&headlist);
+        }
     }
     freemem(headlist);
     free(buff);
