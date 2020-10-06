@@ -84,29 +84,27 @@ int listsize(list * headlist)
 void execute(list * headlist)
 {
     int size = listsize(headlist);
-    char ** arr;
-    arr = malloc((size + 1)  * sizeof(*arr));
+    char ** arr = malloc((size + 1)  * sizeof(*arr));
     list * tmp = headlist;
-    for(int i = size - 1; i >= 0; i--, tmp = tmp->next){
+    int i, j;
+    for(i = size - 1; i >= 0; i--, tmp = tmp->next){
         arr[i] = malloc(strlen(tmp->str) + 1);
         strncpy(arr[i], tmp->str, strlen(tmp->str));
         arr[i][strlen(tmp->str)] = 0;
     }
     arr[size] = (char*)NULL;
-    pid_t pid;
-    if((pid = fork()) == 0){
-        int lenstr = strlen("/bin/") + strlen(arr[0]);
-        char pathcomm[lenstr];
-        memset(pathcomm, '\0', lenstr);
-        strcat(pathcomm, "/bin/");
-        strcat(pathcomm, arr[0]);
-        execvp(pathcomm, arr);
+    pid_t pid = fork();
+    if(pid == 0){
+        execvp(arr[0], arr);
+        perror(NULL);
         exit(1);
-    }   
-    int status;
-    while(wait(&status) != -1);
-    for(int i = 0; i < size; i++)
-          free(arr[i]); 
+    }
+    int status = wait(NULL);
+    while(status != -1){
+        status = wait(NULL);
+    }
+    for(j = 0; j < size; j++)
+          free(arr[j]);
     free(arr);
 }
 
