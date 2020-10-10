@@ -90,9 +90,11 @@ void changedir(char ** arr, int size)
         if(status == -1)
             perror(arr[1]);
     }
-    else {
-        printf("%s\n", "Too many args");
+    else if(size == 1){
+        printf("Too few args\n");
     }
+    else
+        printf("Too many args\n");
 }
 
 void execute(list * headlist)
@@ -105,7 +107,7 @@ void execute(list * headlist)
         arr[i] = malloc(strlen(tmp->str) + 1);
         strncpy(arr[i], tmp->str, strlen(tmp->str));
         arr[i][strlen(tmp->str)] = 0;
-    }  
+    }
     arr[size] = (char*)NULL;
     if(!strcmp(arr[0], "cd")){
         changedir(arr, size);
