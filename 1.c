@@ -76,6 +76,12 @@ int listsize(list * headlist)
     return (iterator - 1);
 }
 
+int spaceortab(char c)
+{
+    return ((c == ' ') || (c == '\t'));
+}
+
+
 void changedir(char ** arr, int size)
 {
     int status;
@@ -84,9 +90,11 @@ void changedir(char ** arr, int size)
         if(status == -1)
             perror(arr[1]);
     }
-    else {
-        printf("%s\n", "Too many args");
+    else if(size == 1){
+        printf("Too few args\n");
     }
+    else
+        printf("Too many args\n");
 }
 
 void execute(list * headlist)
@@ -101,18 +109,18 @@ void execute(list * headlist)
         arr[i][strlen(tmp->str)] = 0;
     }
     arr[size] = (char*)NULL;
-    pid_t pid = fork();
-    if(pid == 0){
-        if(!strcmp(arr[0], "cd")){
-            changedir(arr, size);
-        }
-        else{
+    if(!strcmp(arr[0], "cd")){
+        changedir(arr, size);
+    }
+    else{
+        pid_t pid = fork();
+        if(pid == 0){
             execvp(arr[0], arr);
             perror(NULL);
             exit(1);
         }
+        wait(NULL);
     }
-    wait(NULL);
     for(j = 0; j < size; j++)
           free(arr[j]);
     free(arr);
@@ -121,7 +129,7 @@ void execute(list * headlist)
 list * reinit(list ** headlist)
 {
     freemem(*headlist);
-    printf("%s", ">>");
+    printf(">>");
     return init(*headlist);
 }
 
@@ -135,8 +143,8 @@ void processinglast(int * iterator, char * buff, list **headlist)
 void iscorrectquote(int * quoteflag, list ** headlist)
 {
     if (*quoteflag)
-        printf("%s\n", "incorrect input");
-    else
+        printf("incorrect input\n");
+    else if((*headlist)->str != NULL)
         execute(*headlist);
     *quoteflag = 0;
 }
@@ -150,10 +158,10 @@ int main()
     char * buff = malloc(lenbuff);
     list * headlist = NULL;
     headlist = init(headlist);
-    printf("%s", ">> ");
+    printf(">> ");
     while ((c = getchar()) != EOF) {
         if (c != '\n') {
-            if ((c != ' ' && c != '\"') || (c == ' ' && quoteflag)) {
+            if ((!spaceortab(c) && c != '\"') || (spaceortab(c) && quoteflag)){
                 if (i >= lenbuff - 1)
                     buff = extendbuff(buff, &lenbuff);
                 buff[i] = c;
