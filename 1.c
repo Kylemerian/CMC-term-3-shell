@@ -129,7 +129,7 @@ void execute(list * headlist)
 list * reinit(list ** headlist)
 {
     freemem(*headlist);
-    printf("%s", ">>");
+    printf(">>");
     return init(*headlist);
 }
 
@@ -143,7 +143,7 @@ void processinglast(int * iterator, char * buff, list **headlist)
 void iscorrectquote(int * quoteflag, list ** headlist)
 {
     if (*quoteflag)
-        printf("%s\n", "incorrect input");
+        printf("incorrect input");
     else
         execute(*headlist);
     *quoteflag = 0;
@@ -158,7 +158,7 @@ int main()
     char * buff = malloc(lenbuff);
     list * headlist = NULL;
     headlist = init(headlist);
-    printf("%s", ">> ");
+    printf(">> ");
     while ((c = getchar()) != EOF) {
         if (c != '\n') {
             if ((!spaceortab(c) && c != '\"') || (spaceortab(c) && quoteflag)) {
