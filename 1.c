@@ -144,7 +144,7 @@ void iscorrectquote(int * quoteflag, list ** headlist)
 {
     if (*quoteflag)
         printf("incorrect input\n");
-    else
+    else if((*headlist)->str != NULL)
         execute(*headlist);
     *quoteflag = 0;
 }
@@ -161,7 +161,7 @@ int main()
     printf(">> ");
     while ((c = getchar()) != EOF) {
         if (c != '\n') {
-            if ((!spaceortab(c) && c != '\"') || (spaceortab(c) && quoteflag)) {
+            if ((!spaceortab(c) && c != '\"') || (spaceortab(c) && quoteflag)){
                 if (i >= lenbuff - 1)
                     buff = extendbuff(buff, &lenbuff);
                 buff[i] = c;
