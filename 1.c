@@ -142,7 +142,7 @@ void processinglast(int * iterator, char * buff, list **headlist)
 
 void iscorrectquote(int * quoteflag, list ** headlist)
 {
-    if (*quoteflag)
+    if(*quoteflag)
         printf("incorrect input\n");
     else if((*headlist)->str != NULL)
         execute(*headlist);
