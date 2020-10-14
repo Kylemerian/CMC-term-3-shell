@@ -119,22 +119,22 @@ void changedir(char ** arr, int size)
 void execute(list * headlist, int mode)
 {
     int j;
+    pid_t pid;
     int size = listsize(headlist);
     char ** arr = makearr(headlist, size);
     if(!strcmp(arr[0], "cd")){
         changedir(arr, size);
     }
     else{
-        pid_t pid = fork();
+        pid = fork();
         if(pid == 0){
             execvp(arr[0], arr);
             perror(NULL);
             exit(1);
         }
         if(mode == 0){
-            while(wait(NULL) != -1){
-                /**/
-            }
+            while(wait(NULL) != pid)
+                ;
         }
     }
     for(j = 0; j < size; j++)
