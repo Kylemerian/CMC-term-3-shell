@@ -16,6 +16,7 @@ list * init(list * head)
     head = malloc(sizeof( * head));
     head -> str = NULL;
     head -> next = NULL;
+    printf(">> ");
     return head;
 }
 
@@ -76,11 +77,29 @@ int listsize(list * headlist)
     return (iterator - 1);
 }
 
-int spaceortab(char c)
+int spaceortab(int c)
 {
     return ((c == ' ') || (c == '\t'));
 }
 
+int separator(int c)
+{
+    return ((c == ' ') || (c == '\t') || (c == '&'));
+}
+
+char ** makearr(list * headlist, int size)
+{
+    list * tmp = headlist;
+    int i;
+    char ** arr = malloc((size + 1) * sizeof(*arr));
+    for(i = size - 1; i >= 0; i--, tmp = tmp->next){
+        arr[i] = malloc(strlen(tmp->str) + 1);
+        strncpy(arr[i], tmp->str, strlen(tmp->str));
+        arr[i][strlen(tmp->str)] = 0;
+    }
+    arr[size] = (char*)NULL;
+    return arr;
+}
 
 void changedir(char ** arr, int size)
 {
@@ -97,29 +116,26 @@ void changedir(char ** arr, int size)
         printf("Too many args\n");
 }
 
-void execute(list * headlist)
+void execute(list * headlist, int mode)
 {
+    int j;
+    pid_t pid;
     int size = listsize(headlist);
-    char ** arr = malloc((size + 1)  * sizeof(*arr));
-    list * tmp = headlist;
-    int i, j;
-    for(i = size - 1; i >= 0; i--, tmp = tmp->next){
-        arr[i] = malloc(strlen(tmp->str) + 1);
-        strncpy(arr[i], tmp->str, strlen(tmp->str));
-        arr[i][strlen(tmp->str)] = 0;
-    }
-    arr[size] = (char*)NULL;
+    char ** arr = makearr(headlist, size);
     if(!strcmp(arr[0], "cd")){
         changedir(arr, size);
     }
     else{
-        pid_t pid = fork();
+        pid = fork();
         if(pid == 0){
             execvp(arr[0], arr);
             perror(NULL);
             exit(1);
         }
-        wait(NULL);
+        if(mode == 0){
+            while(wait(NULL) != pid)
+                ;
+        }
     }
     for(j = 0; j < size; j++)
           free(arr[j]);
@@ -129,7 +145,6 @@ void execute(list * headlist)
 list * reinit(list ** headlist)
 {
     freemem(*headlist);
-    printf(">>");
     return init(*headlist);
 }
 
@@ -140,28 +155,37 @@ void processinglast(int * iterator, char * buff, list **headlist)
     *iterator = 0;
 }
 
-void iscorrectquote(int * quoteflag, list ** headlist)
+void iscorrectcommand(int * quoteflag, int * ampers, int chr, list ** headlist)
 {
-    if (*quoteflag)
+    int mode = (*ampers == 1);
+    if (*quoteflag || (*ampers > 1) || (*ampers == 1 && chr != '&'))
         printf("incorrect input\n");
     else if((*headlist)->str != NULL)
-        execute(*headlist);
+        execute(*headlist, mode);
     *quoteflag = 0;
+    *ampers = 0;
+}
+
+void killbg()
+{
+    while(wait(NULL) != -1)
+        ;
 }
 
 int main()
 {
     int c;
+    int lastchar = 0;
+    int ampers = 0;
     int lenbuff = 8;
     int i = 0;
     int quoteflag = 0;
     char * buff = malloc(lenbuff);
     list * headlist = NULL;
     headlist = init(headlist);
-    printf(">> ");
     while ((c = getchar()) != EOF) {
         if (c != '\n') {
-            if ((!spaceortab(c) && c != '\"') || (spaceortab(c) && quoteflag)){
+            if ((!separator(c) && c != '\"') || (separator(c) && quoteflag)){
                 if (i >= lenbuff - 1)
                     buff = extendbuff(buff, &lenbuff);
                 buff[i] = c;
@@ -169,19 +193,24 @@ int main()
             }
             else if (c == '\"')
                 quoteflag = !quoteflag;
+            else if (c == '&')
+                ampers++;
             else if (i != 0) {
                 headlist = addtolist(headlist, buff, i);
                 i = 0;
             }
+            if(!spaceortab(c))
+                lastchar = c;
         }
         else{
             processinglast(&i, buff, &headlist);
-            iscorrectquote(&quoteflag, &headlist);
+            iscorrectcommand(&quoteflag, &ampers, lastchar, &headlist);
             headlist = reinit(&headlist);
         }
     }
     freemem(headlist);
     free(buff);
+    killbg();
     printf("\n");
     return 0;
 }
