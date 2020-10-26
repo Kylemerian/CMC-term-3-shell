@@ -168,18 +168,15 @@ void iscorrectcommand(int * quoteflag, int * ampers, int chr, list ** headlist)
 
 void killbg()
 {
-    while(wait(NULL) != -1)
+    while(wait4(-1, NULL, WNOHANG, NULL) > 0)
         ;
 }
 
 int main()
 {
-    int c;
-    int lastchar = 0;
-    int ampers = 0;
-    int lenbuff = 8;
-    int i = 0;
-    int quoteflag = 0;
+    int c, lastchar = 0;
+    int ampers = 0, lenbuff = 8;
+    int i = 0, quoteflag = 0;
     char * buff = malloc(lenbuff);
     list * headlist = NULL;
     headlist = init(headlist);
@@ -206,11 +203,11 @@ int main()
             processinglast(&i, buff, &headlist);
             iscorrectcommand(&quoteflag, &ampers, lastchar, &headlist);
             headlist = reinit(&headlist);
+            killbg();
         }
     }
     freemem(headlist);
     free(buff);
-    killbg();
     printf("\n");
     return 0;
 }
