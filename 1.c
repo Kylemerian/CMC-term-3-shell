@@ -79,21 +79,32 @@ char * getFilename(int key, list * headlist)
     return tpointer->str;
 }
 
-void changeIO(list * head, int * inOut)
+int changeIO(list * head, int * inOut)
 {
     int fd;
+    int errflag = 0;
     if(inOut[0]){
         fd = open(getFilename(inOut[0], head), O_RDONLY | O_CREAT);
-        dup2(fd, 0);
+        if(fd != -1)
+            dup2(fd, 0);
+        else
+            errflag = 1;
     }
     if(inOut[2]){
         fd = open(getFilename(inOut[2], head),O_WRONLY | O_APPEND | O_CREAT, 0666);
-        dup2(fd, 1);
+        if(fd != -1)
+            dup2(fd, 1);
+        else
+            errflag = 1;
     }
     if(inOut[2] == 0 && inOut[1]){
         fd = open(getFilename(inOut[1], head), O_WRONLY | O_CREAT, 0666);
-        dup2(fd, 1);
+        if(fd != -1)
+            dup2(fd, 1);
+        else
+            errflag = 1;
     }
+    return errflag;
 }
 
 int listsize(list * headlist)
@@ -212,8 +223,9 @@ void execute(list * headlist, int mode, int * inOut)
     else{
         pid = fork();
         if(pid == 0){
-            changeIO(headlist, inOut);
-            execvp(arr[0], arr);
+            if(!changeIO(headlist, inOut)){
+                execvp(arr[0], arr);
+            }
             perror(NULL);
             exit(1);
         }
