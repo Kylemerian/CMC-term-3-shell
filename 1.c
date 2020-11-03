@@ -12,12 +12,12 @@ typedef struct list {
 }
 list;
 
-enum Flags {
+enum flag {
     QUOTEFLAG,
     AMPERFLAG
 };
 
-enum InOut {
+enum inout {
     IN,
     OUT,
     OUTAPP
@@ -184,16 +184,22 @@ int inIO(int key, int * inOut)
     return inFlag;
 }
 
+int countSizeIO(int * inOut)
+{
+    int res = 0, i = 0;
+    for (i = 0; i < 3; i++)
+        if(inOut[i] != 0)
+            res++;
+    if(inOut[2] > 0)
+        res--;
+    return res;
+}
+
 char ** makearr(list * headlist, int size, int * inOut)
 {
     list * tmp = headlist;
     int i, j;
-    int sizeIO = 0;
-    for (int i =0; i < 3; i++)
-        if(inOut[i] != 0)
-            sizeIO++;
-    if(inOut[2] > 0)
-        sizeIO--;
+    int sizeIO = countSizeIO(inOut);
     j = size - 1 - sizeIO;
     char ** arr = malloc((size + 1) * sizeof(*arr));
     for(i = size - 1; i >= 0; i--, tmp = tmp->next){
@@ -226,6 +232,7 @@ void changedir(char ** arr, int size)
 void execute(list * headlist, int mode, int * inOut)
 {
     int j, pid;
+    int sizeIO = countSizeIO(inOut);
     int size = listsize(headlist);
     char ** arr = makearr(headlist, size, inOut);
     if(!strcmp(arr[0], "cd"))
@@ -243,7 +250,7 @@ void execute(list * headlist, int mode, int * inOut)
             while(wait(NULL) != pid)
                 ;
     }
-    for(j = 0; j < size; j++)
+    for(j = 0; j < size - sizeIO; j++)
           free(arr[j]);
     free(arr);
 }
@@ -279,7 +286,7 @@ void iscorrectcmd(int * flags, int chr, list ** head, int * inOut)
 {
     int i;
     int mode = (flags[AMPERFLAG] == 1);
-    if (flags[QUOTEFLAG] || (flags[AMPERFLAG] > 1) || 
+    if (flags[QUOTEFLAG] || (flags[AMPERFLAG] > 1) ||
         (flags[AMPERFLAG] == 1 && chr != '&') || isWrongIO(*head, inOut))
 
         printf("incorrect input\n");
@@ -319,8 +326,7 @@ int main()
             if ((!divide(c) && c != '\"') || (divide(c) && flags[QUOTEFLAG])){
                 if (i >= lenbuff - 1)
                     buff = extendbuff(buff, &lenbuff);
-                buff[i] = c;
-                i++;
+                buff[i++] = c;
             }
             else if (isIOsymbol(c))
                 handleIOquote(lastchar, c, inOutPos, headlist, i);
