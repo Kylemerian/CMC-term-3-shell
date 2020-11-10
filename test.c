@@ -7,14 +7,14 @@
 #include <fcntl.h>
 
 enum Flags {
-    QUOTEFLAG,
-    AMPERFLAG
+    quoteflag,
+    amperflag
 };
 
 enum InOut {
-    IN,
-    OUT,
-    OUTAPP
+    in,
+    out,
+    outapp
 };
 
 typedef struct list {
@@ -51,7 +51,6 @@ char * extendbuff(char * buff, int * lenbuff)
 
 void printlist2(pline * pipelist)
 {
-    //if(pipelist == NULL) printf("dffefd\n");
     if (pipelist != NULL) {
         printlist2(pipelist -> next);
         if (pipelist -> next != NULL)
@@ -115,7 +114,6 @@ pline * addtolist2(pline * pipelist, int key)
 {
     pline * tmp = malloc(sizeof(* tmp));
     tmp -> pos = key;
-    //printf("%d\n", tmp -> pos);
     tmp -> next = pipelist;
     return tmp;
 }
@@ -137,22 +135,22 @@ int changeIO(list * head, int * inOut)
 {
     int fd;
     int errflag = 0;
-    if(inOut[IN]){
-        fd = open(getFilename(inOut[IN], head), O_RDONLY | O_CREAT);
+    if(inOut[in]){
+        fd = open(getFilename(inOut[in], head), O_RDONLY|O_CREAT);
         if(fd != -1)
             dup2(fd, 0);
         else
             errflag = 1;
     }
-    if(inOut[OUTAPP]){
-        fd = open(getFilename(inOut[OUTAPP], head),O_WRONLY | O_APPEND | O_CREAT, 0666);
+    if(inOut[outapp]){
+        fd = open(getFilename(inOut[outapp], head),O_WRONLY|O_APPEND|O_CREAT, 0666);
         if(fd != -1)
             dup2(fd, 1);
         else
             errflag = 1;
     }
-    if(inOut[OUTAPP] == 0 && inOut[OUT]){
-        fd = open(getFilename(inOut[OUT], head), O_WRONLY | O_CREAT, 0666);
+    if(inOut[outapp] == 0 && inOut[out]){
+        fd = open(getFilename(inOut[out], head), O_WRONLY|O_CREAT, 0666);
         if(fd != -1)
             dup2(fd, 1);
         else
@@ -196,22 +194,22 @@ void handleIOquote(int lastc, int c, int * inOut, list * headlist, int i)
     if(i > 0)
         size++;
     if(c == '<')
-        if(inOut[IN] == 0)
-            inOut[IN] = size;
+        if(inOut[in] == 0)
+            inOut[in] = size;
         else
-            inOut[IN] = -1;
+            inOut[in] = -1;
     else if(c == '>' && lastc == '>')
-        if(inOut[OUTAPP] == 0)
-            inOut[OUTAPP] = size;
+        if(inOut[outapp] == 0)
+            inOut[outapp] = size;
         else
-            inOut[IN] = -1;
+            inOut[in] = -1;
     else if(c == '>')
-        if(inOut[OUT] == 0)
-            inOut[OUT] = size;
+        if(inOut[out] == 0)
+            inOut[out] = size;
         else
-            inOut[IN] = -1;
+            inOut[in] = -1;
     else
-        inOut[IN] = -1;
+        inOut[in] = -1;
 }
 
 int isIOsymbol(int c)
@@ -229,7 +227,7 @@ int spaceTabIOPipeline(int c)
     return ((c == ' ') || (c == '\t') || (c == '<') || (c == '>') || (c == '|'));
 }
 
-int separator(int c)
+int separ(int c)
 {
     return ((c == ' ') || (c == '\t') || (c == '&') || (c == '>')
             || (c == '<') || (c == '|'));
@@ -247,19 +245,35 @@ int inIO(int key, int * inOut)
     return inFlag;
 }
 
-int * makeEdges(pline * pipelist, int psize)
+int * makeEdges(pline * pipelist, int psize, int lsize)
 {
     pline * tmp = pipelist;
     int i;
-    int * arr = malloc((psize + 1) * sizeof(int));
+    int * arr = malloc((psize + 2) * sizeof(int));
     for(i = psize; i > 0; i--){
         arr[i] = tmp -> pos;
         tmp = tmp -> next;
     }
     arr[0] = 1;
-    for(i = 0; i < psize + 1; i++)
-        printf("%d\n", arr[i]);
+    arr[psize + 1] = lsize + 1;
+    /*for(i = 0; i < psize + 2; i++)
+        printf("%d\n", arr[i]);*/
     return arr;
+}
+
+char ** makecurarr(char ** arr, int * edges, int iterator)
+{
+    int left, right, i;
+    left = edges[iterator];
+    right = edges[iterator + 1];
+    char ** curarr = malloc((right - left + 1) * sizeof(*curarr));
+    for(i = left; i < right; i++){
+        curarr[i - left] = malloc(strlen(arr[i - 1]) + 1);
+        strncpy(curarr[i - left], arr[i - 1], strlen(arr[i - 1]));
+        curarr[i - left][strlen(arr[i - 1])] = 0;
+    }
+    curarr[right - left] = NULL;
+    return curarr;
 }
 
 char ** makearr(list * headlist, int size, int * inOut)
@@ -270,7 +284,7 @@ char ** makearr(list * headlist, int size, int * inOut)
     for (i = 0; i < 3; i++)
         if(inOut[i] != 0)
             sizeIO++;
-    if(inOut[OUTAPP] > 0)
+    if(inOut[outapp] > 0)
         sizeIO--;
     j = size - 1 - sizeIO;
     char ** arr = malloc((size + 1) * sizeof(*arr));
@@ -305,30 +319,28 @@ void execute(list * headlist, pline * pipelist, int mode, int * inOut)
 {
     int j, k, pid;
     int size = listsize(headlist);
-    //printf("%d ", pipelist -> pos);
     int psize = listsize2(pipelist);
-    int * edges = makeEdges(pipelist, psize);
+    int * edges = makeEdges(pipelist, psize, size);
     char ** arr = makearr(headlist, size, inOut);
+    char ** curarr;
     int ** fd = malloc(sizeof(*fd) * (psize + 1));
     for(k = 0; k < psize + 1; k++)
         fd[k] = malloc(2 * sizeof(int));
     for(k = 0; k < psize + 1; k++){
         pipe(fd[k]);
-        if(!strcmp(arr[0], "cd"))
-            changedir(arr, size);
+        curarr = makecurarr(arr, edges, k);
+        if(!strcmp(curarr[0], "cd"))
+            changedir(curarr, size);/*to chnge size*/
         else{
             pid = fork();
             if(pid == 0){
-                /*if(!changeIO(headlist, inOut)){
-                    execvp(arr[0], arr);
-                }*/
-                dup2(1, fd[k][1]);
+                if(k != psize)
+                    dup2(fd[k][1], 1);
                 if(k != 0)
-                    dup2(0, fd[k - 1][0]);
+                    dup2(fd[k - 1][0], 0);
                 close(fd[k][0]);
-                /**/
-                execvp(arr[0], arr);
-                perror(NULL);
+                execvp(curarr[0], curarr);
+                perror(curarr[0]);
                 exit(1);
             }
             close(fd[k][1]);
@@ -339,7 +351,7 @@ void execute(list * headlist, pline * pipelist, int mode, int * inOut)
                     ;
         }
     }
-    for(j = 0; j < size; j++)
+    for(j = 0; j < size; j++)/*to fix*/
         free(arr[j]);
     free(arr);
 }
@@ -351,7 +363,7 @@ void reinit(list ** headlist, pline ** pipelist)
     init(headlist, pipelist);
 }
 
-void processinglast(int * iterator, char * buff, list **headlist)
+void processinglast(int * iterator, char * buff, list ** headlist)
 {
     if(*iterator != 0)
         *headlist = addtolist(*headlist, buff, *iterator);
@@ -387,18 +399,17 @@ int isWrongIO(list * headlist, int * inOut)
 void iscorrectcmd(int * flags, int chr, list ** head, pline * plist, int * inOut)
 {
     int i;
-    int mode = (flags[AMPERFLAG] == 1);
-    if (flags[AMPERFLAG] || (flags[AMPERFLAG] > 1) || (flags[AMPERFLAG] == 1 && chr != '&')
-        || isWrongIO(*head, inOut) || isWrongPipeline(*head, plist))
+    int mode = (flags[amperflag] == 1);
+    if (flags[quoteflag] || (flags[amperflag] > 1) 
+            || (flags[amperflag] == 1 && chr != '&') 
+            || isWrongIO(*head, inOut) || isWrongPipeline(*head, plist))
 
         printf("incorrect input\n");
     else if((*head)->str != NULL){
-        /*printRecurs2(plist);*/
         execute(*head, plist,  mode, inOut);
-        /*printlist(*head);*/
     }
-    flags[QUOTEFLAG] = 0;
-    flags[AMPERFLAG] = 0;
+    flags[quoteflag] = 0;
+    flags[amperflag] = 0;
     for(i = 0; i < 3; i++)
         inOut[i] = 0;
 }
@@ -428,7 +439,7 @@ int main()
     init(&headlist, &pipelist);
     while ((c = getchar()) != EOF) {
         if (c != '\n') {
-            if ((!separator(c) && c != '\"') || (separator(c) && flags[QUOTEFLAG])){
+            if ((!separ(c) && c != '\"') || (separ(c) && flags[quoteflag])){
                 if (i >= lenbuff - 1)
                     buff = extendbuff(buff, &lenbuff);
                 buff[i++] = c;
@@ -436,12 +447,12 @@ int main()
             else if (isIOsymbol(c))
                 handleIOquote(lastchar, c, inOutPos, headlist, i);
             else if (c == '\"')
-                flags[QUOTEFLAG] = !flags[QUOTEFLAG];
+                flags[quoteflag] = !flags[quoteflag];
             else if (c == '&')
-                flags[AMPERFLAG]++;
+                flags[amperflag]++;
             else if (c == '|')
                 handlePLine(c, &pipelist, headlist, i);
-            if (i != 0 && !flags[QUOTEFLAG] && spaceTabIOPipeline(c)) {
+            if (i != 0 && !flags[quoteflag] && spaceTabIOPipeline(c)) {
                 headlist = addtolist(headlist, buff, i);
                 i = 0;
             }
@@ -458,3 +469,4 @@ int main()
     freememory(headlist, pipelist, buff);
     return 0;
 }
+
