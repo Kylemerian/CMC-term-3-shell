@@ -92,7 +92,7 @@ char * getName(int key, list * headlist)
     return tpointer->str;
 }
 
-int changeIO(list * head, int * inOut)
+/*int changeIO(list * head, int * inOut)
 {
     int fd;
     int errflag = 0;
@@ -118,7 +118,7 @@ int changeIO(list * head, int * inOut)
             errflag = 1;
     }
     return errflag;
-}
+}*/
 
 int listsize(list * headlist)
 {
@@ -154,6 +154,44 @@ void handleIOquote(int lastc, int c, int * inOut, list * headlist, int i)
     else
         inOut[in] = -1;
 }
+
+int changeIO(list * head, int * inOut, int ** fds, int ind, int numPrcs)
+{
+    int fd;
+    if(inOut[in] && ind == 0){
+        fd = open(getName(inOut[in], head), O_RDWR | O_CREAT);
+        if(fd != -1)
+            dup2(fd, 0);
+        else{
+            perror("Can't open file");
+            return 1;
+        }
+    }
+    if(inOut[outapp] && ind == (numPrcs - 1)){
+        fd = open(getName(inOut[outapp], head),O_RDWR|O_APPEND|O_CREAT,0777);
+        if(fd != -1)
+            dup2(fd, 1);
+        else{
+            perror("Can't create file");
+            return 1;
+        }
+    }
+    if(inOut[outapp] == 0 && inOut[out] && ind == (numPrcs - 1)){
+        fd = open(getName(inOut[out], head), O_RDWR | O_CREAT, 0777);
+        if(fd != -1)
+            dup2(fd, 1);
+        else{
+            perror("Can't open file");
+            return 1;
+        }
+    }
+    if(ind != 0)
+        dup2(fds[ind - 1][0], 0);
+    if(ind != numPrcs - 1)
+        dup2(fds[ind][1], 1);
+    close(fds[ind][0]);
+
+} 
 
 int isIOsymbol(int c)
 {
@@ -299,16 +337,10 @@ void execute(list * headlist, int mode, int * inOut)
         else{
             pid = fork();
             if(pid == 0){
-                /*if(!changeIO(headlist, inOut)){
+                if(!changeIO(headlist, inOut, fd, k, numPrcs)){
                     execvp(arr[nextCmd], &arr[nextCmd]);
-                }*/
-                if(k != 0)
-                    dup2(fd[k - 1][0], 0);
-                if(k != numPrcs - 1)
-                    dup2(fd[k][1], 1);
-                close(fd[k][0]);
-                execvp(arr[nextCmd], &arr[nextCmd]);
-                perror(NULL);
+                    perror(arr[nextCmd]);
+                }
                 exit(1);
             }
             close(fd[k][1]);
